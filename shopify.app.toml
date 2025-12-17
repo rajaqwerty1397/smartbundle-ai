@@ -1,0 +1,38 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "ab1671f5db9dc0612b922aebb07ac13c"
+name = "Alintro AI Upsell & Bundles"
+application_url = "https://merriest-bigamously-lyman.ngrok-free.dev"
+embedded = true
+handle = "notifyv3"
+
+[webhooks]
+api_version = "2025-10"
+
+  [[webhooks.subscriptions]]
+  topics = ["app/uninstalled"]
+  uri = "/webhooks"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_customers,read_price_rules,write_price_rules,write_inventory,read_inventory,read_orders,read_products,write_products,read_themes,read_discounts,write_discounts"
+optional_scopes = [ ]
+use_legacy_install_flow = false
+
+[app_proxy]
+url = "https://merriest-bigamously-lyman.ngrok-free.dev/api"
+subpath = "smartbundle"
+prefix = "apps"
+
+[[extensions]]
+type = "theme"
+name = "Alintro Bundles"
+handle = "alintro-bundles-theme"
+
+[auth]
+redirect_urls = [
+  "https://merriest-bigamously-lyman.ngrok-free.dev/auth/callback",
+  "https://merriest-bigamously-lyman.ngrok-free.dev/shopify/callback",
+  "https://merriest-bigamously-lyman.ngrok-free.dev/api/auth/callback"
+]
+

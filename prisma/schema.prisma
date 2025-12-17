@@ -1,0 +1,189 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Shopify session management (required)
+model Session {
+  id            String    @id
+  shop          String
+  state         String
+  isOnline      Boolean   @default(false)
+  scope         String?
+  expires       DateTime?
+  accessToken   String
+  userId        BigInt?
+  firstName     String?
+  lastName      String?
+  email         String?
+  accountOwner  Boolean   @default(false)
+  locale        String?
+  collaborator  Boolean?  @default(false)
+  emailVerified Boolean?  @default(false)
+}
+
+// ============================================
+// SmartBundle AI Models
+// ============================================
+
+// Shop settings and configuration
+model Shop {
+  id                String   @id @default(cuid())
+  shopDomain        String   @unique
+  name              String?
+  email             String?
+  plan              String   @default("FREE")
+  subscriptionId    String?
+  trialEndsAt       DateTime?
+  currency          String   @default("USD")
+  timezone          String   @default("UTC")
+  
+  // AI Settings
+  aiEnabled         Boolean  @default(true)
+  aiModel           String   @default("llama-3.1-8b-instant")
+  
+  // Feature toggles
+  bundlesEnabled    Boolean  @default(true)
+  upsellsEnabled    Boolean  @default(true)
+  analyticsEnabled  Boolean  @default(true)
+  
+  // Timestamps
+  installedAt       DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relations
+  bundles           Bundle[]
+  analytics         Analytics[]
+}
+
+// Bundle definitions
+model Bundle {
+  id                String   @id @default(cuid())
+  shopId            String
+  shop              Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  
+  // Bundle info
+  title             String
+  description       String?
+  type              String   @default("fixed") // fixed, mix_match, volume, bogo
+  status            String   @default("draft") // draft, active, paused, archived
+  
+  // Pricing
+  discountType      String   @default("percentage") // percentage, fixed_amount
+  discountValue     Float    @default(10)
+  discountCode      String?
+  
+  // Display settings
+  displayLocation   String   @default("product_page") // product_page, cart, checkout
+  priority          Int      @default(0)
+  
+  // Conditions
+  minProducts       Int      @default(2)
+  maxProducts       Int?
+  
+  // AI generated
+  isAiGenerated     Boolean  @default(false)
+  aiConfidence      Float?
+  
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  startsAt          DateTime?
+  endsAt            DateTime?
+  
+  // Relations
+  products          BundleProduct[]
+  analytics         Analytics[]
+}
+
+// Products in a bundle
+model BundleProduct {
+  id                String   @id @default(cuid())
+  bundleId          String
+  bundle            Bundle   @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  
+  // Shopify product reference
+  productId         String   // Shopify product GID
+  variantId         String?  // Shopify variant GID (optional)
+  
+  // Product details (cached from Shopify)
+  title             String
+  imageUrl          String?
+  price             Float
+  compareAtPrice    Float?
+  
+  // Bundle settings
+  quantity          Int      @default(1)
+  isRequired        Boolean  @default(true)
+  position          Int      @default(0)
+  
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([bundleId, productId, variantId])
+}
+
+// Analytics and tracking
+model Analytics {
+  id                String   @id @default(cuid())
+  shopId            String
+  shop              Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  bundleId          String?
+  bundle            Bundle?  @relation(fields: [bundleId], references: [id], onDelete: SetNull)
+  
+  // Event info
+  eventType         String   // view, click, add_to_cart, purchase
+  eventSource       String   // product_page, cart, checkout, post_purchase
+  
+  // Context
+  productId         String?
+  orderId           String?
+  customerId        String?
+  
+  // Values
+  revenue           Float?
+  quantity          Int?
+  
+  // Metadata
+  sessionId         String?
+  userAgent         String?
+  
+  // Timestamps
+  createdAt         DateTime @default(now())
+  
+  @@index([shopId, eventType])
+  @@index([bundleId])
+  @@index([createdAt])
+}
+
+// AI Recommendation cache
+model Recommendation {
+  id                String   @id @default(cuid())
+  shopDomain        String
+  
+  // Source product
+  sourceProductId   String
+  
+  // Recommended products (JSON array of product IDs)
+  recommendedIds    String   // JSON array
+  
+  // AI metadata
+  reasoning         String?
+  confidence        Float?
+  model             String?
+  
+  // Cache management
+  createdAt         DateTime @default(now())
+  expiresAt         DateTime
+  
+  @@unique([shopDomain, sourceProductId])
+  @@index([shopDomain])
+  @@index([expiresAt])
+}
+
+

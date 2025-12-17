@@ -1,0 +1,10 @@
+api_version = "2024-01"
+
+[[extensions]]
+uid = "c991ad56-093b-badb-5119-7e2c330dadd260981c78"
+type = "theme"
+name = "Alintro Bundles"
+handle = "alintro-bundles"
+
+[extensions.capabilities]
+network_access = true

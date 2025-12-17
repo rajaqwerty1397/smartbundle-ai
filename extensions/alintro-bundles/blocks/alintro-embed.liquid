@@ -1,0 +1,45 @@
+{% if template contains 'product' %}
+<div id="alintro-container"></div>
+
+<script>
+  window.AlintroConfig = {
+    shopDomain: "{{ shop.permanent_domain }}",
+    productId: "{{ product.id }}",
+    variantId: "{{ product.selected_or_first_available_variant.id }}",
+    productTitle: {{ product.title | json }},
+    productPrice: {{ product.price }},
+    productImage: "{{ product.featured_image | image_url: width: 200 }}",
+    currencySymbol: "{{ cart.currency.symbol }}",
+    appUrl: "https://merriest-bigamously-lyman.ngrok-free.dev"
+  };
+  
+  console.log('Alintro Config:', window.AlintroConfig);
+</script>
+
+<link rel="stylesheet" href="{{ 'bundle-widget.css' | asset_url }}">
+<script src="{{ 'bundle-widget.js' | asset_url }}" defer></script>
+
+<style>
+  #alintro-container {
+    margin: 16px 0;
+  }
+</style>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Alintro Bundles",
+  "target": "body",
+  "enabled_on": {
+    "templates": ["product"]
+  },
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "enabled",
+      "label": "Enable bundle widget",
+      "default": true
+    }
+  ]
+}
+{% endschema %}
